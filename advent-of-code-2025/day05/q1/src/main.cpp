@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <numeric>
+#include <sstream>
 
 template <class T>
 void print_vector(const std::vector<T>& vec) {
@@ -10,7 +11,7 @@ void print_vector(const std::vector<T>& vec) {
 		std::cout << element << std::endl;
 }
 
-void read_data(const std::string& file_name, std::vector<std::string>& grid) {
+void read_data(const std::string& file_name, std::vector<long long int> &nums, std::vector<std::pair<long long int, long long int>> &ranges) {
 	std::ifstream file {file_name};
 	if (!file.is_open()) {
 		std::cerr << "Error: cannot open file!\n";
@@ -18,43 +19,48 @@ void read_data(const std::string& file_name, std::vector<std::string>& grid) {
 	}
 
 	std::string line;
-	while (std::getline(file, line))
-		grid.push_back(line);
+	while (std::getline(file, line)) {
+		if (line.find('-') != std::string::npos) {
+			std::stringstream ss {line};
+			std::string range_str;
+
+			long long int start;
+			std::getline(ss, range_str, '-');
+			start = std::stoll(range_str);
+
+			long long int end;
+			std::getline(ss, range_str);
+			end = std::stoll(range_str);
+
+			ranges.push_back(std::make_pair(start, end));
+		}
+		else if (line != "")
+			nums.push_back(std::stoll(line));
+	}
 }
 
-bool is_valid(int r, int c, int i, int j) {
-	if (i < 0 || j < 0 || i >= r || j >= c)
-		return false;
-	return true;
-}
 
 int main() {
 	// read data
-	std::vector<std::string> grid;
+	std::vector<long long int> nums;
+	std::vector<std::pair<long long int, long long int>> ranges;
 
-	std::string data_file = "./adventofcode.com_2025_day_4_input.txt";
-	read_data(data_file, grid);
+	std::string data_file = "./adventofcode.com_2025_day_5_input.txt";
+	read_data(data_file, nums, ranges);
 
 	// show data
-	print_vector(grid);
+	for (int i = 0; i < ranges.size(); ++i)
+		std::cout << ranges[i].first << "-" << ranges[i].second << std::endl;
+	print_vector(nums);
 
 	// solution
 	int result = 0;
-	
-	int r = grid.size();
-	int c = grid[0].size();
-	for (int i = 0; i < r; ++i)
-		for (int j = 0; j < c; ++j)
-			if (grid[i][j] == '@') {
-				int rolls_around = -1;			// the center of window is a roll
-				for (int m = -1; m <= 1; ++m)
-					for (int n = -1; n <= 1; ++n)
-						if (is_valid(r, c, i + m, j + n) && grid[i + m][j + n] == '@')
-							++rolls_around;
-				if (rolls_around < 4)
-					++result;
+	for (int i = 0; i < nums.size(); ++i)
+		for (int j = 0; j < ranges.size(); ++j)
+			if (nums[i] >= ranges[j].first && nums[i] <= ranges[j].second) {
+				++result;
+				break;
 			}
-
 	std::cout << "Result: " << result << std::endl;
 
 	return 0;
